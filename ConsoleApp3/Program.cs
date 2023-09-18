@@ -10,11 +10,14 @@ using System.Xml;
 
 class Program
 {
+    private static readonly object NewtonSoft;
+
     static async Task Main(string[] args)
     {
         var result = await SendPostRequestAsync();
         //await SendGetRequestAsync(result);
-        await SendPostDomainCreateRequestAsync(result);
+        //await SendPostDomainCreateRequestAsync(result);
+        var result2 =  await SendPostSubDomainCreateRequestAsync(result);
     }
 
     static async Task<string> SendPostRequestAsync()
@@ -84,15 +87,15 @@ class Program
 
         //client.DefaultRequestHeaders.Add("accept", "application/json");
         client.DefaultRequestHeaders.Add("X-API-Key", apiKey);
+       
 
         var obj = new Subdomain();
 
-        obj.name = "testingConsoleDomain";
+        obj.name = "testingConsoleDomain.navedge.co";
         var test = JsonSerializer.Serialize(obj);
+        Console.WriteLine(test);
+        var testing = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
 
-
-        // Prepare the content (empty JSON object in this case)
-        //string jsonContent = "{}";
         var content = new StringContent(test, Encoding.UTF8, "application/json");
 
         // Send the POST request
@@ -103,26 +106,9 @@ class Program
         {
             string responseContent = await response.Content.ReadAsStringAsync();
 
-
-            //int equalsSignIndex = responseContent.IndexOf(':');
-
-            //// Get the value part of the key-value pair.
-            //string value = responseContent.Substring(equalsSignIndex + 1);
-
-            //// Remove any extra quotes from the value.
-            //value = value.Replace("\"", "");
-            //value = value.Trim();
-            //value = value.Trim('\"');
-            //value = value.Trim('}');
-            //value = value.Trim('\n');
-
-
             Console.WriteLine(response.StatusCode.ToString());
             return response.StatusCode.ToString();
 
-            // var key = responseContent.Split(':');
-            // Console.WriteLine("Response: " + key[1]);
-            // return responseContent.Trim('"');
         }
         else
         {
@@ -130,6 +116,54 @@ class Program
             return string.Empty;
         }
 
+
+    }
+
+    static async Task<string> SendPostSubDomainCreateRequestAsync(string apiKey)
+    {
+        HttpClientHandler clientHandler = new HttpClientHandler();
+        clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
+
+        using HttpClient client = new HttpClient(clientHandler);
+
+        // Set the base address
+        client.BaseAddress = new Uri("https://104.219.233.15:8443/");
+
+        //client.DefaultRequestHeaders.Add("accept", "application/json");
+        client.DefaultRequestHeaders.Add("X-API-Key", apiKey);
+
+
+        var obj = new SSubdomain();
+
+        obj.@params.Insert(1, "nadeemNanaabuWala");
+        obj.@params.Insert(5, "testmuzamil.navedge.co");
+
+
+        
+        var test = JsonSerializer.Serialize(obj);
+        Console.WriteLine(test);
+        var testing = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
+
+        var content = new StringContent(test, Encoding.UTF8, "application/json");
+
+        // Send the POST request
+        HttpResponseMessage response = await client.PostAsync("api/v2/cli/subdomain/call", content);
+
+        // Check the response
+        
+        string responseContent = await response.Content.ReadAsStringAsync();
+        //var obj2 = new responseObj();
+        var obj2 = JsonSerializer.Deserialize<responseObj>(responseContent);
+        if(obj2.code != 0)
+        {
+            Console.WriteLine("Error: " + obj2.stdout);
+            return string.Empty;
+        }
+        else
+        {
+            Console.WriteLine("Created");
+            return "Created";
+        }
 
     }
     static async Task SendGetRequestAsync(string apiKey)
@@ -179,7 +213,21 @@ public class Subdomain
 {
     public string name { get; set; }
     public string hosting_type { get; set; } = "virtual";
-    public HostingSettings hosting_settings { get; set; } = new HostingSettings { ftp_login = "xyftplogin", ftp_password = "testApi@1234" };
+    public HostingSettings hosting_settings { get; set; } = new HostingSettings { ftp_login = "xxyyftplogin", ftp_password = "testApi@1234" };
     public List<string> ipv4 { get; set; } = new List<string> { "104.219.233.15" };
     public Plan plan { get; set; } = new Plan { name = "Unlimited"};
+}
+
+public class SSubdomain
+{
+    public List<string> @params { get; set; } = new List<string> { "--create", "-domain", "navedge.co", "-www-root"};
+}
+
+public class responseObj
+{
+    public int code { get; set; } 
+    public string stdout { get; set; } = string.Empty;
+    public string stderr { get; set; } = string.Empty;
+
+
 }
